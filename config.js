@@ -9,6 +9,10 @@ const CONFIG = {
   // Which slide (1-indexed) the clickable video overlay should appear on
   VIDEO_SLIDE: 6,
 
+  TEAM_SLIDE: 14,
+  ARNAV_EMAIL: "arnav@vyobha.com",
+  GAVNEESH_EMAIL: "gavneesh@vyobha.com",
+  
   DECK_TITLE: "Stellére — Pre-Seed",
   TOTAL_SLIDES: 15,
 };
