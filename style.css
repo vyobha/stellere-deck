@@ -154,6 +154,24 @@ html, body {
   box-shadow: 0 0 0 2px var(--gold) inset;
 }
 
+.email-hotspot {
+  position: absolute;
+  cursor: pointer;
+  border-radius: 4px;
+  width: 7%;
+  height: 5%;
+  top: 42%;
+  transition: box-shadow 0.15s, background 0.15s;
+}
+
+.email-hotspot:hover {
+  background: rgba(185, 155, 107, 0.12);
+  box-shadow: 0 0 0 2px var(--gold) inset;
+}
+
+.email-hotspot-arnav { left: 13%; }
+.email-hotspot-gavneesh { left: 57%; }
+
 .nav-arrow {
   position: absolute;
   top: 50%;
