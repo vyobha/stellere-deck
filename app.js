@@ -15,6 +15,8 @@
   const counterEl = document.getElementById("counter");
   const dotsEl = document.getElementById("dots");
   const videoHotspot = document.getElementById("video-hotspot");
+  const emailHotspotArnav = document.getElementById("email-hotspot-arnav");
+  const emailHotspotGavneesh = document.getElementById("email-hotspot-gavneesh");
   const viewerTag = document.getElementById("viewer-tag");
   const btnPrev = document.getElementById("btn-prev");
   const btnNext = document.getElementById("btn-next");
@@ -63,6 +65,14 @@
       videoHotspot.style.display = "block";
     } else {
       videoHotspot.style.display = "none";
+    }
+
+    if (currentSlide === CONFIG.TEAM_SLIDE) {
+      emailHotspotArnav.style.display = "block";
+      emailHotspotGavneesh.style.display = "block";
+    } else {
+      emailHotspotArnav.style.display = "none";
+      emailHotspotGavneesh.style.display = "none";
     }
   }
 
@@ -183,6 +193,16 @@
   videoHotspot.addEventListener("click", function () {
     sendEvent("video_click", { page: currentSlide });
     window.open(CONFIG.VIDEO_URL, "_blank", "noopener");
+  });
+
+  emailHotspotArnav.addEventListener("click", function () {
+    sendEvent("email_click", { page: currentSlide, target: "arnav" });
+    window.location.href = "mailto:" + CONFIG.ARNAV_EMAIL;
+  });
+
+  emailHotspotGavneesh.addEventListener("click", function () {
+    sendEvent("email_click", { page: currentSlide, target: "gavneesh" });
+    window.location.href = "mailto:" + CONFIG.GAVNEESH_EMAIL;
   });
 
   document.addEventListener("keydown", function (e) {
