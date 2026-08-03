@@ -2,14 +2,13 @@
   "use strict";
 
   const TOTAL = CONFIG.TOTAL_SLIDES;
-  const STORAGE_KEY = "stellere_deck_viewer";
+  const STORAGE_KEY = "stellere_deck_visitor";
 
   let currentSlide = 1;
   let slideEnterTime = null;
-  let viewer = { visitorId: null, name: "", email: "" };
+  let viewer = { visitorId: null, tag: "" };
   let geo = { country: "", city: "" };
 
-  const gateEl = document.getElementById("gate");
   const viewerEl = document.getElementById("viewer");
   const slideImg = document.getElementById("slide-img");
   const counterEl = document.getElementById("counter");
@@ -20,8 +19,6 @@
   const viewerTag = document.getElementById("viewer-tag");
   const btnPrev = document.getElementById("btn-prev");
   const btnNext = document.getElementById("btn-next");
-  const gateForm = document.getElementById("gate-form");
-  const gateError = document.getElementById("gate-error");
 
   function uuid() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -30,6 +27,28 @@
       const v = c === "x" ? r : (r & 0x3) | 0x8;
       return v.toString(16);
     });
+  }
+
+  // Optional ?to=SomeInvestor in the URL — lets you send a personalised link
+  // without making the viewer type anything. Falls back to "" if absent.
+  function getTagFromUrl() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get("to") || "").trim().slice(0, 60);
+    } catch (e) { return ""; }
+  }
+
+  function getOrCreateVisitorId() {
+    try {
+      let id = localStorage.getItem(STORAGE_KEY);
+      if (!id) {
+        id = uuid();
+        localStorage.setItem(STORAGE_KEY, id);
+      }
+      return id;
+    } catch (e) {
+      return uuid();
+    }
   }
 
   function slidePath(n) {
@@ -61,19 +80,11 @@
     btnNext.disabled = currentSlide === TOTAL;
     updateDots();
 
-    if (currentSlide === CONFIG.VIDEO_SLIDE) {
-      videoHotspot.style.display = "block";
-    } else {
-      videoHotspot.style.display = "none";
-    }
+    videoHotspot.style.display = (currentSlide === CONFIG.VIDEO_SLIDE) ? "block" : "none";
 
-    if (currentSlide === CONFIG.TEAM_SLIDE) {
-      emailHotspotArnav.style.display = "block";
-      emailHotspotGavneesh.style.display = "block";
-    } else {
-      emailHotspotArnav.style.display = "none";
-      emailHotspotGavneesh.style.display = "none";
-    }
+    const onTeamSlide = currentSlide === CONFIG.TEAM_SLIDE;
+    emailHotspotArnav.style.display = onTeamSlide ? "block" : "none";
+    emailHotspotGavneesh.style.display = onTeamSlide ? "block" : "none";
   }
 
   function logSlideTime() {
@@ -100,8 +111,8 @@
     const payload = Object.assign({
       type: type,
       visitorId: viewer.visitorId,
-      name: viewer.name,
-      email: viewer.email,
+      name: viewer.tag,   // reused field: the ?to= label, if any, otherwise blank
+      email: "",
       ts: Date.now(),
       referrer: document.referrer || "",
       ua: navigator.userAgent,
@@ -138,9 +149,7 @@
   }
 
   function startViewer() {
-    gateEl.classList.add("hidden");
-    viewerEl.classList.remove("hidden");
-    viewerTag.textContent = viewer.name || viewer.email;
+    viewerTag.textContent = viewer.tag || "";
     currentSlide = 1;
     slideEnterTime = Date.now();
     buildDots();
@@ -148,44 +157,13 @@
     sendEvent("session_start", { page: 1 });
   }
 
-  function loadStoredViewer() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (e) { return null; }
-  }
-
-  function saveViewer(v) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(v)); } catch (e) {}
-  }
-
   // ── Init ──
   fetchGeo();
 
-  const stored = loadStoredViewer();
-  if (stored && stored.email) {
-    viewer = stored;
-    startViewer();
-    sendEvent("return_visit", { page: 1 });
-  }
+  viewer.visitorId = getOrCreateVisitorId();
+  viewer.tag = getTagFromUrl();
 
-  gateForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    const name = document.getElementById("viewer-name").value.trim();
-    const email = document.getElementById("viewer-email").value.trim();
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-
-    if (!name || !emailOk) {
-      gateError.textContent = "Please enter your name and a valid email.";
-      return;
-    }
-    gateError.textContent = "";
-
-    viewer = { visitorId: uuid(), name: name, email: email };
-    saveViewer(viewer);
-    startViewer();
-  });
+  startViewer();
 
   btnPrev.addEventListener("click", function () { goToSlide(currentSlide - 1); });
   btnNext.addEventListener("click", function () { goToSlide(currentSlide + 1); });
@@ -206,7 +184,6 @@
   });
 
   document.addEventListener("keydown", function (e) {
-    if (viewerEl.classList.contains("hidden")) return;
     if (e.key === "ArrowRight") goToSlide(currentSlide + 1);
     if (e.key === "ArrowLeft") goToSlide(currentSlide - 1);
   });
@@ -234,7 +211,7 @@
     if (document.hidden) {
       logSlideTime();
       slideEnterTime = null;
-    } else if (!viewerEl.classList.contains("hidden")) {
+    } else {
       slideEnterTime = Date.now();
     }
   });
